@@ -217,7 +217,7 @@ export function TimeChart(p: TimeChartProps) {
         <rect x={M.l} y={M.t} width={plotW} height={plotH} fill="transparent" />
       </svg>
       {cursorX !== null && desc && (
-        <div className={`tip ${cursorX > width * 0.65 ? 'flip' : ''}`} style={{ left: `${(cursorX / width) * 100}%` }} aria-hidden>
+        <div className={`tip ${cursorX > width - 200 ? 'flip' : ''}`} style={{ left: `${(cursorX / width) * 100}%` }} aria-hidden>
           <strong>{fmtClock(p.cursor!, true)}</strong> · {desc}
         </div>
       )}

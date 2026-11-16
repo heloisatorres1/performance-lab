@@ -159,7 +159,7 @@ td.r, th.r { text-align: right; }
 
 .stat { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; min-width: 0; }
 .stat .label { color: var(--ink-2); font-size: 14px; display: flex; align-items: center; gap: 8px; }
-.stat .value { font-size: 30px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.stat .value { overflow-wrap: anywhere; font-size: 30px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .stat .value small { font-size: 16px; font-weight: 600; color: var(--ink-2); margin-left: 4px; }
 .stat .foot { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
 .swatch { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
@@ -171,7 +171,7 @@ td.r, th.r { text-align: right; }
 .progress > span { display: block; height: 100%; background: var(--cyan); }
 
 /* Charts */
-.chart { position: relative; }
+.chart { position: relative; max-width: 100%; }
 .chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
 .chart-head h3 { display: flex; align-items: center; gap: 8px; }
 .chart svg { display: block; width: 100%; overflow: visible; touch-action: pan-y; }
