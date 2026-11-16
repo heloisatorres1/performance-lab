@@ -163,10 +163,13 @@ test('narrow layout: navigation collapses and nothing overflows', async ({ page 
     // Name any element that sticks out past the viewport, so a failure says what to fix.
     const offenders = await page.evaluate(() =>
       Array.from(document.querySelectorAll('body *'))
-        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 0.5 && !el.closest('.sidebar'))
+        // Tables scroll inside .table-wrap by design; everything else must fit.
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 0.5 && !el.closest('.sidebar, .table-wrap'))
         .slice(0, 5)
         .map((el) => `${el.tagName.toLowerCase()}.${(el.getAttribute('class') ?? '').split(' ').join('.')} "${(el.textContent ?? '').trim().slice(0, 40)}" right=${Math.round(el.getBoundingClientRect().right)}`),
     );
     expect(offenders, path).toEqual([]);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, path).toBeLessThanOrEqual(0);
   }
 });
