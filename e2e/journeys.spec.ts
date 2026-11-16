@@ -90,6 +90,21 @@ test('a reload during recording becomes interrupted, never a silent resume', asy
   await expect(page.getByText(/the page was closed/)).toBeVisible();
 });
 
+test('a recording keeps running while you browse other pages', async ({ page }) => {
+  await page.goto('/#/sessions');
+  await page.getByLabel('Duration').selectOption('60');
+  await page.getByLabel('Warm-up (excluded)').selectOption('10');
+  await page.getByRole('button', { name: 'Start demo session' }).click();
+  await expect(page).toHaveURL(/#\/live/);
+  await page.getByRole('button', { name: '60×' }).click();
+  await page.getByRole('link', { name: 'Results' }).click();
+  await expect(page.getByRole('link', { name: /Recording/ })).toBeVisible();
+  // The 60 s session finishes in about a second at 60× even though Live Monitor is closed.
+  await expect(page.getByRole('link', { name: /Recording/ })).toHaveCount(0, { timeout: 5000 });
+  await page.goto('/#/sessions');
+  await expect(page.getByRole('row').nth(1)).toContainText('Complete');
+});
+
 test('compare: mismatched conditions block the verdict until acknowledged', async ({ page }) => {
   await page.goto('/#/compare');
   await expect(page.getByText('All match')).toBeVisible();

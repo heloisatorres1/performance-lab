@@ -23,7 +23,7 @@ export interface Report {
 const cache = new Map<string, Report>();
 
 export function reportKey(s: Session, rs: Ruleset) {
-  return `${s.id}|${s.state}|${s.recordedMs}|${s.endReason ?? ''}|${rs.id}@${rs.version}|${s.annotations.length}`;
+  return `${s.id}|${s.state}|${s.recordedMs}|${s.endReason ?? ''}|${rs.id}@${rs.version}|${s.annotations.map((a) => a.id).join(',')}`;
 }
 
 export function buildReport(s: Session, rs: Ruleset): Report {

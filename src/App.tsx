@@ -1,4 +1,4 @@
-import { HashRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Card, Empty, ToastProvider } from './components/ui';
 import { ComparePage } from './routes/Compare';
@@ -10,6 +10,12 @@ import { ResultsPage } from './routes/Results';
 import { SessionsPage } from './routes/Sessions';
 import { SettingsPage } from './routes/Settings';
 
+// A new key per session resets the selected time when switching reports.
+function ReportRoute() {
+  const { id } = useParams();
+  return <ReportPage key={id} />;
+}
+
 export function App() {
   return (
     <HashRouter>
@@ -20,7 +26,7 @@ export function App() {
             <Route path="sessions" element={<SessionsPage />} />
             <Route path="live" element={<LivePage />} />
             <Route path="results" element={<ResultsPage />} />
-            <Route path="results/:id" element={<ReportPage />} />
+            <Route path="results/:id" element={<ReportRoute />} />
             <Route path="compare" element={<ComparePage />} />
             <Route path="publishing" element={<PublishingPage />} />
             <Route path="devices" element={<DevicesPage />} />

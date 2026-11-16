@@ -2,7 +2,24 @@
 
 **Game performance sessions you can trust and reproduce.** Performance Lab is a QA tool for mobile game performance: set up a session with explicit test conditions, watch telemetry while you play (or while a scripted bot plays), then get a report where every chart is linked to what was on screen at that moment.
 
+**[Live demo](https://heloisatorres1.github.io/performance-lab/)** · [![CI and Pages](https://github.com/heloisatorres1/performance-lab/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/heloisatorres1/performance-lab/actions/workflows/deploy-pages.yml)
+
 > Portfolio demo. All data is simulated by a deterministic, seeded generator (fictional game *Orbit Garden*, fictional devices). No device, bot or Notion account is connected, and nothing leaves your browser.
+
+## Why build it
+
+The goal is a performance tool that a QA team **owns and can shape to its own needs**, instead of paying for a commercial product such as GameBench and working within its limits.
+
+Every team and project measures something slightly different. One game cares about load times, another about thermal throttling in long sessions, another about battery drain on low-end phones. Here those needs are code and configuration the team controls:
+
+- **Rules per project**: frame-rate targets, frame-time limits, memory budgets and comparison thresholds are versioned settings, not fixed vendor defaults.
+- **Device profiles**: the team declares which devices it tests and what each one can measure.
+- **Scenarios and bot scripts**: repeatable test routes are written for each game.
+- **Metrics and collectors**: new metrics plug in through one collector interface, with their source, unit and scope declared.
+- **Where results go**: Notion is one publishing destination; others (Confluence, Slack, a team dashboard) use the same publisher interface.
+- **Reports and exports**: the definitions, the HTML report and the CSV/JSON bundle are open, so results can feed any other tool.
+
+There is no per-seat licence, and no test data has to leave the team's own machines.
 
 ## The problem
 

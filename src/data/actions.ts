@@ -134,6 +134,34 @@ export function setLiveSpeed(speed: number) {
   });
 }
 
+let lastCheckpointAt = 0;
+
+/**
+ * Advances a recording regardless of which page is open: saves progress,
+ * ends a failed bot run, and stops at the planned duration. Returns the
+ * session id when the recording ended on this tick.
+ */
+export function tickLive(now = Date.now()): string | null {
+  const s = store().get();
+  if (!s.live) return null;
+  const sess = s.sessions.find((x) => x.id === s.live!.sessionId);
+  if (!sess || sess.state !== 'recording') return null;
+  const elapsed = liveElapsedMs(s, now);
+  if (sess.sim.botFailAtSec !== undefined && elapsed >= sess.sim.botFailAtSec * 1000) {
+    endRecording(sess.id, 'failed', 'bot-failed', now);
+    return sess.id;
+  }
+  if (elapsed >= sess.config.durationSec * 1000) {
+    void stopSession(sess.id, now);
+    return sess.id;
+  }
+  if (now - lastCheckpointAt > 2000) {
+    lastCheckpointAt = now;
+    checkpointLive();
+  }
+  return null;
+}
+
 /** Persists progress so a closed tab still leaves recoverable partial data. */
 export function checkpointLive() {
   const s = store().get();
@@ -153,20 +181,20 @@ async function finish(id: string, elapsed: number, reason: EndReason) {
 }
 
 /** Stop & save: flushes what was recorded and builds the report. */
-export async function stopSession(id: string) {
+export async function stopSession(id: string, now = Date.now()) {
   const s = store().get();
   const sess = getSession(id);
   if (!sess || sess.state !== 'recording') return;
-  const elapsed = Math.floor(liveElapsedMs(s));
+  const elapsed = Math.floor(liveElapsedMs(s, now));
   await finish(id, elapsed, elapsed >= sess.config.durationSec * 1000 ? 'completed' : 'stopped-early');
 }
 
 /** Interrupted / failed / cancelled keep partial data and never resume. */
-export function endRecording(id: string, to: 'interrupted' | 'failed' | 'cancelled', reason: EndReason) {
+export function endRecording(id: string, to: 'interrupted' | 'failed' | 'cancelled', reason: EndReason, now = Date.now()) {
   const s = store().get();
   const sess = getSession(id);
   if (!sess || sess.state !== 'recording') return;
-  const elapsed = Math.floor(reason === 'bot-failed' && sess.sim.botFailAtSec ? sess.sim.botFailAtSec * 1000 : liveElapsedMs(s));
+  const elapsed = Math.floor(reason === 'bot-failed' && sess.sim.botFailAtSec ? sess.sim.botFailAtSec * 1000 : liveElapsedMs(s, now));
   update((st) => ({ ...st, live: null }));
   patchSession(id, (x) => ({ ...transition(x, to), endReason: reason, recordedMs: elapsed }));
   log(`${to === 'interrupted' ? 'Recording interrupted' : to === 'failed' ? 'Recording failed' : 'Recording cancelled'}: ${sess.name}`, `/results/${id}`);

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Activity, AlertTriangle, Bookmark, Camera, Gamepad2, Hand, ImageOff, Radio, Square, Unplug, X } from 'lucide-react';
-import { addAnnotation, checkpointLive, endRecording, liveElapsedMs, setLiveSpeed, stopSession } from '../data/actions';
+import { addAnnotation, endRecording, liveElapsedMs, setLiveSpeed, stopSession } from '../data/actions';
 import { useAppState } from '../data/state';
 import { fmtClock } from '../domain/analysis';
 import { captureDataUrl } from '../domain/art';
@@ -62,27 +62,7 @@ function Recording({ session }: { session: Session }) {
   const { cursor, onCursor } = useLinkedCursor(null);
   const [marker, setMarker] = useState('');
   const [confirm, setConfirm] = useState<null | 'cancel' | 'disconnect'>(null);
-  const lastCheckpoint = useRef(0);
-  const ending = useRef(false);
-
-  useEffect(() => {
-    if (ending.current) return;
-    if (session.sim.botFailAtSec !== undefined && elapsed >= session.sim.botFailAtSec * 1000) {
-      ending.current = true;
-      endRecording(session.id, 'failed', 'bot-failed');
-      nav(`/results/${session.id}`);
-      return;
-    }
-    if (elapsed >= planned) {
-      ending.current = true;
-      void stopSession(session.id).then(() => nav(`/results/${session.id}`));
-      return;
-    }
-    if (now - lastCheckpoint.current > 2000) {
-      lastCheckpoint.current = now;
-      checkpointLive();
-    }
-  }, [elapsed, now, planned, session, nav]);
+  // Auto-stop, bot failure and progress saves run in the app shell (LiveDriver), on every page.
 
   const last = (m: MetricId) => {
     const arr = tel.series[m];
@@ -226,7 +206,7 @@ function Recording({ session }: { session: Session }) {
         <span style={{ flex: 1 }} />
         <button className="btn ghost" onClick={() => setConfirm('disconnect')}><Unplug size={16} aria-hidden /> Simulate disconnect</button>
         <button className="btn ghost" onClick={() => setConfirm('cancel')}><X size={16} aria-hidden /> Cancel</button>
-        <button className="btn primary" onClick={() => { ending.current = true; void stopSession(session.id).then(() => nav(`/results/${session.id}`)); }}>
+        <button className="btn primary" onClick={() => void stopSession(session.id).then(() => nav(`/results/${session.id}`))}>
           <Square size={16} aria-hidden /> Stop &amp; save
         </button>
       </div>
@@ -244,7 +224,6 @@ function Recording({ session }: { session: Session }) {
               <button
                 className="btn primary"
                 onClick={() => {
-                  ending.current = true;
                   endRecording(session.id, confirm === 'cancel' ? 'cancelled' : 'interrupted', confirm === 'cancel' ? 'cancelled' : 'disconnected');
                   nav(`/results/${session.id}`);
                 }}

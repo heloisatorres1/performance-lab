@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Activity, BarChart3, GitCompareArrows, Menu, Play, Settings, Smartphone, Upload } from 'lucide-react';
 import { useAppState } from '../data/state';
-import { liveElapsedMs } from '../data/actions';
+import { liveElapsedMs, tickLive } from '../data/actions';
 import { fmtClock } from '../domain/analysis';
 import { useNow } from './hooks';
 
@@ -23,6 +23,19 @@ export function Logo() {
   );
 }
 
+/** Keeps a recording advancing on every page; opens the report if it ends while you watch it. */
+function LiveDriver({ sessionId }: { sessionId: string }) {
+  const nav = useNavigate();
+  useEffect(() => {
+    const h = setInterval(() => {
+      const ended = tickLive();
+      if (ended && window.location.hash.startsWith('#/live')) nav(`/results/${ended}`);
+    }, 250);
+    return () => clearInterval(h);
+  }, [sessionId, nav]);
+  return null;
+}
+
 export function Layout() {
   const s = useAppState();
   const [navOpen, setNavOpen] = useState(false);
@@ -33,6 +46,7 @@ export function Layout() {
 
   return (
     <div className={`shell ${navOpen ? 'nav-open' : ''}`}>
+      {s.live && <LiveDriver sessionId={s.live.sessionId} />}
       <a href="#main" className="skip-link">
         Skip to content
       </a>

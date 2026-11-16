@@ -1,7 +1,8 @@
 import { createMockNotion, emptyNotion, type MockNotionState } from '../src/integrations/mockNotion';
 import { newPublication, prepareRetry, runPublication, type PublicationSnapshot } from '../src/integrations/publication';
 import { createStore, seed, setActiveStore, store } from '../src/data/state';
-import { addAnnotation, endRecording, publishSnapshot, recoverAfterReload, retryPublication, setNotionFaults, startSession, stopSession, timing } from '../src/data/actions';
+import { addAnnotation, endRecording, publishSnapshot, recoverAfterReload, removeAnnotation, retryPublication, setBotFailNext, setDraft, setNotionFaults, startSession, stopSession, tickLive, timing } from '../src/data/actions';
+import { buildReport } from '../src/domain/report';
 
 const snapshot: PublicationSnapshot = { kind: 'report', title: 'T', properties: {}, summary: ['s'], caveats: [], charts: ['FPS', 'Frame time'], includeRaw: true, reportLink: 'local' };
 const now = () => '2026-11-16T12:00:00.000Z';
@@ -79,6 +80,43 @@ describe('recording lifecycle', () => {
     expect(s.endReason).toBe('stopped-early');
     expect(s.annotations[0].text).toBe('Opened shop');
     expect(store().get().live).toBeNull();
+  });
+
+  it('the recording clock stops at the planned duration without the Live page open', async () => {
+    setDraft({ durationSec: 60, warmupSec: 10 });
+    const id = (await startSession())!;
+    const live = store().get().live!;
+    expect(tickLive(live.segmentStartedAt + 1000)).toBeNull();
+    // 10× speed: 6 s of wall time covers the 60 s session.
+    expect(tickLive(live.segmentStartedAt + 7000)).toBe(id);
+    await new Promise((r) => setTimeout(r, 0));
+    const s = store().get().sessions.find((x) => x.id === id)!;
+    expect(s.state).toBe('complete');
+    expect(s.recordedMs).toBe(60_000);
+    expect(s.endReason).toBe('completed');
+  });
+
+  it('a bot that misses a checkpoint fails the run separately from the collector', async () => {
+    setDraft({ playMode: 'bot', connection: 'usb', botScriptId: 'bot-harvest' });
+    setBotFailNext(true);
+    const id = (await startSession())!;
+    const live = store().get().live!;
+    expect(tickLive(live.segmentStartedAt + 8000)).toBe(id);
+    const s = store().get().sessions.find((x) => x.id === id)!;
+    expect(s.state).toBe('failed');
+    expect(s.endReason).toBe('bot-failed');
+    expect(s.recordedMs).toBe(75_000);
+  });
+
+  it('report cache follows marker changes, not just their count', () => {
+    const a = addAnnotation('ses-084', 1000, 'first')!;
+    const before = buildReport(store().get().sessions.find((x) => x.id === 'ses-084')!, store().get().ruleset);
+    removeAnnotation('ses-084', a.id);
+    addAnnotation('ses-084', 2000, 'second');
+    const after = buildReport(store().get().sessions.find((x) => x.id === 'ses-084')!, store().get().ruleset);
+    expect(after).not.toBe(before);
+    expect(after.session.annotations.map((x) => x.text)).toContain('second');
+    expect(after.session.annotations.map((x) => x.text)).not.toContain('first');
   });
 
   it('a disconnect keeps partial data, marks the run interrupted and never resumes', async () => {
