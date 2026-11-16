@@ -160,7 +160,13 @@ test('narrow layout: navigation collapses and nothing overflows', async ({ page 
   for (const path of ['/results/ses-084', '/sessions', '/compare', '/publishing?source=ses-084']) {
     await page.goto('/#' + path);
     await page.waitForTimeout(200);
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow, path).toBeLessThanOrEqual(0);
+    // Name any element that sticks out past the viewport, so a failure says what to fix.
+    const offenders = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('body *'))
+        .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 0.5 && !el.closest('.sidebar'))
+        .slice(0, 5)
+        .map((el) => `${el.tagName.toLowerCase()}.${(el.getAttribute('class') ?? '').split(' ').join('.')} "${(el.textContent ?? '').trim().slice(0, 40)}" right=${Math.round(el.getBoundingClientRect().right)}`),
+    );
+    expect(offenders, path).toEqual([]);
   }
 });

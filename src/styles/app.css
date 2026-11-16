@@ -165,7 +165,8 @@ td.r, th.r { text-align: right; }
 .swatch { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
 
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 13px; color: var(--ink-2); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 13px; color: var(--ink-2); max-width: 100%; min-width: 0; }
+.chip svg { flex-shrink: 0; }
 
 .progress { height: 8px; border-radius: 4px; background: var(--panel-3); overflow: hidden; flex: 1; min-width: 120px; }
 .progress > span { display: block; height: 100%; background: var(--cyan); }
